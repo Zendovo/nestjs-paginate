@@ -1,4 +1,4 @@
-import { Repository, FindConditions, SelectQueryBuilder, Like, ObjectLiteral } from 'typeorm'
+import { Repository, FindConditions, SelectQueryBuilder, Like, ObjectLiteral, Brackets } from 'typeorm'
 import { PaginateQuery } from './decorator'
 import { ServiceUnavailableException } from '@nestjs/common'
 
@@ -41,7 +41,7 @@ export async function paginate<T>(
     config: PaginateConfig<T>
 ): Promise<Paginated<T>> {
     let page = query.page || 1
-    const limit = Math.min(query.limit || config.defaultLimit || 20, config.maxLimit || 100);
+    const limit = Math.min(query.limit || config.defaultLimit || 20, config.maxLimit || 100)
     const sortBy = [] as SortBy<T>
     const search = query.search
     const path = query.path
@@ -87,14 +87,16 @@ export async function paginate<T>(
         }
     }
 
-    const where: ObjectLiteral[] = []
+    const where = []
     if (search && config.searchableColumns) {
         for (const column of config.searchableColumns) {
             where.push({ [column]: Like(`%${search}%`), ...config.where })
         }
     }
 
-    ;[items, totalItems] = await queryBuilder.andWhere(where.length ? where : config.where || {}).getManyAndCount()
+    ;[items, totalItems] = await queryBuilder
+        .andWhere(new Brackets((qb) => qb.where(where.length ? where : config.where || {})))
+        .getManyAndCount()
 
     let totalPages = totalItems / limit
     if (totalItems % limit) totalPages = Math.ceil(totalPages)
