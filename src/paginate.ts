@@ -94,7 +94,7 @@ export async function paginate<T>(
         }
     }
 
-    ;[items, totalItems] = await queryBuilder.where(where.length ? where : config.where || {}).getManyAndCount()
+    ;[items, totalItems] = await queryBuilder.andWhere(where.length ? where : config.where || {}).getManyAndCount()
 
     let totalPages = totalItems / limit
     if (totalItems % limit) totalPages = Math.ceil(totalPages)
